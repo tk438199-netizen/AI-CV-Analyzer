@@ -10,3 +10,4 @@ sqlalchemy
 python-jose[cryptography]
 passlib[bcrypt]
 bcrypt
+pwdlib[argon2]
