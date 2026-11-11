@@ -1,6 +1,6 @@
 // Backend API URL
 
-const API_URL = "http://127.0.0.1:8000";
+const API_URL = "https://ai-cv-analyzer-1-4cp0.onrender.com";
 
 
 // Registration Form
