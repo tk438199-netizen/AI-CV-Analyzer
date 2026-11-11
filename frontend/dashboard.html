@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Dashboard | AI CV Analyzer</title>
+
+    <link rel="stylesheet" href="css/style.css">
+
+</head>
+
+<body class="dashboard-page">
+
+    <div class="dashboard-layout">
+
+        <!-- Sidebar -->
+
+        <aside class="sidebar">
+
+            <a href="index.html" class="logo sidebar-logo">
+                <span class="logo-icon">AI</span>
+                CV Analyzer
+            </a>
+
+            <div class="sidebar-menu">
+
+                <p class="menu-label">MENU</p>
+
+                <a href="dashboard.html" class="menu-item active">
+                    <span>▦</span>
+                    Dashboard
+                </a>
+
+                <a href="#upload-section" class="menu-item">
+                    <span>📄</span>
+                    Analyze CV
+                </a>
+
+                <a href="#history-section" class="menu-item">
+                    <span>◷</span>
+                    Analysis History
+                </a>
+
+                <p class="menu-label">ACCOUNT</p>
+
+                <a href="#profile-section" class="menu-item">
+                    <span>♙</span>
+                    My Profile
+                </a>
+
+                <button id="logoutBtn" class="menu-item logout-btn">
+                    <span>↪</span>
+                    Logout
+                </button>
+
+            </div>
+
+            <div class="sidebar-footer">
+
+                <p>AI-Powered CV Analyzer</p>
+
+                <small>Version 1.0.0</small>
+
+            </div>
+
+        </aside>
+
+
+        <!-- Main Content -->
+
+        <main class="dashboard-main">
+
+
+            <!-- Topbar -->
+
+            <header class="dashboard-topbar">
+
+                <div>
+                    <h2>Dashboard</h2>
+                    <p>Manage your CV analysis activities.</p>
+                </div>
+
+                <div class="user-profile" id="profile-section">
+
+                    <div class="user-avatar" id="userAvatar">
+                        U
+                    </div>
+
+                    <div>
+                        <strong id="userName">User</strong>
+                        <small id="userEmail">user@example.com</small>
+                    </div>
+
+                </div>
+
+            </header>
+
+
+            <!-- Welcome Section -->
+
+            <section class="welcome-section">
+
+                <div>
+
+                    <span class="welcome-badge">
+                        YOUR PERSONAL WORKSPACE
+                    </span>
+
+                    <h1>
+                        Welcome back,
+                        <span id="welcomeName">User</span>!
+                    </h1>
+
+                    <p>
+                        Ready to improve your CV?
+                        Start a new analysis and discover
+                        your professional strengths.
+                    </p>
+
+                </div>
+
+                <a href="#upload-section" class="dashboard-primary-btn">
+                    + Analyze New CV
+                </a>
+
+            </section>
+
+
+            <!-- Statistics -->
+
+            <section class="stats-grid">
+
+                <div class="stat-card">
+
+                    <div class="stat-icon blue">📄</div>
+
+                    <div>
+                        <p>Total Analyses</p>
+                        <h2>--</h2>
+                        <small>Coming with history integration</small>
+                    </div>
+
+                </div>
+
+
+                <div class="stat-card">
+
+                    <div class="stat-icon green">✓</div>
+
+                    <div>
+                        <p>Completed Analyses</p>
+                        <h2>--</h2>
+                        <small>Analysis records</small>
+                    </div>
+
+                </div>
+
+
+                <div class="stat-card">
+
+                    <div class="stat-icon orange">📊</div>
+
+                    <div>
+                        <p>Latest CV Score</p>
+                        <h2>--</h2>
+                        <small>Predicted score</small>
+                    </div>
+
+                </div>
+
+
+            </section>
+
+
+            <!-- Upload Section -->
+
+            <section class="upload-section" id="upload-section">
+
+                <div class="section-title">
+
+                    <div>
+                        <h2>Analyze Your CV</h2>
+
+                        <p>
+                            Upload your resume and get an
+                            AI-powered analysis report.
+                        </p>
+                    </div>
+
+                    <span class="pdf-badge">PDF ONLY</span>
+
+                </div>
+
+
+<div class="upload-box">
+
+    <div class="upload-icon">
+        📄
+    </div>
+
+    <h3>Upload Your CV</h3>
+
+    <p>
+        Select your PDF resume to begin
+        the analysis process.
+    </p>
+
+    <button class="upload-button" id="uploadBtn">
+        Choose PDF File
+    </button>
+
+    <input
+        type="file"
+        id="cvFile"
+        accept=".pdf,application/pdf"
+        hidden
+    >
+
+    <p id="selectedFile" class="upload-note">
+        Supported format: PDF (Maximum 5MB)
+    </p>
+
+    <div id="uploadMessage" class="form-message"></div>
+
+    <div id="uploadProgress" class="upload-progress">
+
+        <div id="progressBar"></div>
+
+    </div>
+
+</div>
+
+            </section>
+
+
+            <!-- History Section -->
+
+            <section class="history-section" id="history-section">
+
+                <div class="section-title">
+
+                    <div>
+                        <h2>Recent Analysis</h2>
+
+                        <p>
+                            Your previous CV analysis reports.
+                        </p>
+                    </div>
+
+                    <span class="view-all">
+                        History
+                    </span>
+
+                </div>
+
+
+                <div class="empty-history">
+
+                    <div>📂</div>
+
+                    <h3>No Analysis Yet</h3>
+
+                    <p>
+                        Your CV analysis history will
+                        appear here after your first analysis.
+                    </p>
+
+                </div>
+
+            </section>
+
+
+            <!-- Footer -->
+
+            <footer class="dashboard-footer">
+
+                © 2026 AI-Powered CV Analyzer.
+                All rights reserved.
+
+            </footer>
+
+
+        </main>
+
+    </div>
+
+
+    <script src="js/script.js"></script>
+
+</body>
+
+</html>

@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>CV Analysis Result | AI CV Analyzer</title>
+
+    <link rel="stylesheet" href="css/style.css">
+
+</head>
+
+
+<body class="result-page">
+
+    <div class="result-container">
+
+        <div class="result-header">
+
+            <a href="dashboard.html" class="back-home">
+                ← Back to Dashboard
+            </a>
+
+            <h1>CV Analysis Report</h1>
+
+            <p>Your AI-powered CV analysis is ready.</p>
+
+        </div>
+
+
+        <!-- Score Card -->
+
+        <div class="result-score-card">
+
+            <p>YOUR PREDICTED CV SCORE</p>
+
+            <h2 id="cvScore">--</h2>
+
+            <span>Out of 100</span>
+
+        </div>
+
+
+        <!-- File Information -->
+
+        <div class="result-grid">
+
+            <div class="result-card">
+
+                <h3>File Name</h3>
+
+                <p id="fileName">--</p>
+
+            </div>
+
+
+            <div class="result-card">
+
+                <h3>Total Pages</h3>
+
+                <p id="pageCount">--</p>
+
+            </div>
+
+
+            <div class="result-card">
+
+                <h3>Total Words</h3>
+
+                <p id="wordCount">--</p>
+
+            </div>
+
+
+            <div class="result-card">
+
+                <h3>Detected Skills</h3>
+
+                <p id="skillsCount">--</p>
+
+            </div>
+
+
+            <div class="result-card">
+
+                <h3>Education</h3>
+
+                <p id="educationCount">--</p>
+
+            </div>
+
+
+            <div class="result-card">
+
+                <h3>Projects</h3>
+
+                <p id="projectsCount">--</p>
+
+            </div>
+
+        </div>
+
+
+        <!-- Suggestions -->
+
+        <div class="result-suggestions">
+
+            <h2>Improvement Suggestions</h2>
+
+            <div id="suggestionList">
+
+                Loading suggestions...
+
+            </div>
+
+        </div>
+
+
+        <div class="result-actions">
+
+            <a href="dashboard.html" class="dashboard-primary-btn">
+                Analyze Another CV
+            </a>
+
+        </div>
+
+    </div>
+
+
+    <script src="js/script.js"></script>
+
+</body>
+
+</html>
