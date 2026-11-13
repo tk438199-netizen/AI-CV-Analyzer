@@ -13,3 +13,4 @@ bcrypt
 pwdlib[argon2]
 email-validator
 psycopg2-binary
+psycopg[binary]
