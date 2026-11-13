@@ -28,6 +28,8 @@ from fastapi import Depends
 from app.database import get_db
 
 from app.models.analysis import AnalysisHistory
+from app.models.user import User
+from app.services.security import get_current_user
 
 @router.post("/upload")
 async def upload_cv(file: UploadFile = File(...)):
@@ -831,282 +833,100 @@ async def predict_score(file: UploadFile = File(...)):
 @router.post("/analyze-complete")
 async def complete_cv_analysis(
     file: UploadFile = File(...),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
 ):
-
-    # 1. Validate PDF
-
-    if not file.filename.lower().endswith(".pdf"):
-
-        raise HTTPException(
-            status_code=400,
-            detail="Only PDF files are allowed"
-        )
-
+    if not file.filename or not file.filename.lower().endswith(".pdf"):
+        raise HTTPException(status_code=400, detail="Only PDF files are allowed")
     contents = await file.read()
-
     if len(contents) > 5 * 1024 * 1024:
-
-        raise HTTPException(
-            status_code=400,
-            detail="File size must be less than 5MB"
-        )
-
+        raise HTTPException(status_code=400, detail="File size must be less than 5MB")
     if not contents:
-
-        raise HTTPException(
-            status_code=400,
-            detail="Uploaded file is empty"
-        )
-
-    # 2. Extract PDF Text
-
+        raise HTTPException(status_code=400, detail="Uploaded file is empty")
     try:
-
-        pdf_document = fitz.open(
-            stream=contents,
-            filetype="pdf"
-        )
-
-        text = ""
-
-        for page in pdf_document:
-
-            text += page.get_text() + "\n"
-
-        page_count = len(pdf_document)
-
-        pdf_document.close()
-
+        pdf = fitz.open(stream=contents, filetype="pdf")
+        text = "\\n".join(page.get_text() for page in pdf)
+        page_count = len(pdf)
+        pdf.close()
     except Exception:
-
-        raise HTTPException(
-            status_code=400,
-            detail="Could not read PDF file"
-        )
-
+        raise HTTPException(status_code=400, detail="Could not read PDF file")
     if not text.strip():
-
-        raise HTTPException(
-            status_code=422,
-            detail="No readable text found in PDF"
-        )
-
-    # 3. Personal Information
+        raise HTTPException(status_code=422, detail="No readable text found in PDF")
 
     personal_info = extract_personal_information(text)
-
-    # 4. Skills Analysis
-
     skills = extract_skills(text)
-
-    # 5. Education Analysis
-
     education = analyze_education(text)
-
-    # 6. Experience Analysis
-
     experience = analyze_experience(text)
-
-    # 7. Projects Analysis
-
     projects = analyze_projects(text)
-
-    # 8. Certifications Analysis
-
     certifications = analyze_certifications(text)
-
-    # 9. Structure Analysis
-
     structure = analyze_structure(text)
-
-    # 10. Improvement Suggestions
-
-    suggestions = generate_suggestions(
-        personal_info,
-        skills,
-        education,
-        experience,
-        projects,
-        certifications,
-        structure
-    )
-
-    # 11. Feature Extraction
-
-    features = extract_features(
-        personal_info,
-        skills,
-        education,
-        experience,
-        projects,
-        certifications,
-        structure
-    )
-
-    # 12. CV Score Prediction
-
+    suggestions = generate_suggestions(personal_info, skills, education, experience, projects, certifications, structure)
+    features = extract_features(personal_info, skills, education, experience, projects, certifications, structure)
     try:
-
         predicted_score = predict_cv_score(features)
-
     except FileNotFoundError:
-
-        raise HTTPException(
-            status_code=503,
-            detail="CV Score Model not found"
-        )
-
+        raise HTTPException(status_code=503, detail="CV Score Model not found")
     except Exception:
-
-        raise HTTPException(
-            status_code=500,
-            detail="CV Score Prediction Failed"
-        )
-
-    # 13. Final Response
+        raise HTTPException(status_code=500, detail="CV Score Prediction Failed")
 
     result = {
-
-    "message": "CV Analysis Completed Successfully",
-
-    "filename": file.filename,
-
-    "file_information": {
-
-        "page_count": page_count,
-
-        "word_count": structure["total_words"]
-
-    },
-
-    "personal_information": personal_info,
-
-    "skills_analysis": {
-
-        "skills": skills,
-
-        "total_skills": sum(
-            len(skill_list)
-            for skill_list in skills.values()
-        )
-
-    },
-
-    "education_analysis": education,
-
-    "experience_analysis": experience,
-
-    "projects_analysis": projects,
-
-    "certifications_analysis": certifications,
-
-    "structure_analysis": structure,
-
-    "improvement_analysis": suggestions,
-
-    "score_analysis": {
-
-        "predicted_score": predicted_score,
-
-        "score_out_of": 100,
-
-        "features_used": features
-
+        "message": "CV Analysis Completed Successfully",
+        "filename": file.filename,
+        "file_information": {"page_count": page_count, "word_count": structure["total_words"]},
+        "personal_information": personal_info,
+        "skills_analysis": {"skills": skills, "total_skills": sum(len(v) for v in skills.values())},
+        "education_analysis": education,
+        "experience_analysis": experience,
+        "projects_analysis": projects,
+        "certifications_analysis": certifications,
+        "structure_analysis": structure,
+        "improvement_analysis": suggestions,
+        "score_analysis": {"predicted_score": predicted_score, "score_out_of": 100, "features_used": features}
     }
-
-}
-
-# Save Analysis in Database
-
     try:
-        new_analysis = AnalysisHistory(
-                filename=file.filename,
-                page_count=page_count,
-                word_count=structure["total_words"],
-                predicted_score=predicted_score,
-                analysis_result=json.dumps(result)
-            )
-        
-        db.add(new_analysis)
-        db.commit()
-        db.refresh(new_analysis)
-        
+        record = AnalysisHistory(
+            user_id=current_user.id, filename=file.filename, page_count=page_count,
+            word_count=structure["total_words"], predicted_score=predicted_score,
+            analysis_result=json.dumps(result)
+        )
+        db.add(record); db.commit(); db.refresh(record)
     except Exception:
-            db.rollback()
-            raise HTTPException(
-                status_code=500,
-                detail="Failed to save analysis history"
-            )
-        
-    result["analysis_id"] = new_analysis.id
-        
+        db.rollback()
+        raise HTTPException(status_code=500, detail="Failed to save analysis history")
+    result["analysis_id"] = record.id
     return result
 
+
 @router.get("/history")
-def get_analysis_history(db: Session = Depends(get_db)):
-
-    history = (
-        db.query(AnalysisHistory)
-        .order_by(AnalysisHistory.created_at.desc())
-        .all()
-    )
-
+def get_analysis_history(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    rows = db.query(AnalysisHistory).filter(
+        AnalysisHistory.user_id == current_user.id
+    ).order_by(AnalysisHistory.created_at.desc()).all()
     return {
-
-        "total_records": len(history),
-
-        "history": [
-
-            {
-                "id": item.id,
-
-                "filename": item.filename,
-
-                "page_count": item.page_count,
-
-                "word_count": item.word_count,
-
-                "predicted_score": item.predicted_score,
-
-                "created_at": item.created_at
-
-            }
-
-            for item in history
-
-        ]
-
+        "total_records": len(rows),
+        "history": [{
+            "id": row.id, "filename": row.filename, "page_count": row.page_count,
+            "word_count": row.word_count, "predicted_score": row.predicted_score,
+            "created_at": row.created_at.isoformat() if row.created_at else None
+        } for row in rows]
     }
+
 
 @router.get("/history/{analysis_id}")
 def get_analysis_details(
     analysis_id: int,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
 ):
-
-    analysis = db.query(AnalysisHistory).filter(
-        AnalysisHistory.id == analysis_id
+    row = db.query(AnalysisHistory).filter(
+        AnalysisHistory.id == analysis_id,
+        AnalysisHistory.user_id == current_user.id
     ).first()
-
-    if not analysis:
-
-        raise HTTPException(
-            status_code=404,
-            detail="Analysis history not found"
-        )
-
-    return {
-
-        "id": analysis.id,
-
-        "filename": analysis.filename,
-
-        "created_at": analysis.created_at,
-
-        "analysis": json.loads(
-            analysis.analysis_result
-        )
-
-    }
-
+    if not row:
+        raise HTTPException(status_code=404, detail="Analysis history not found")
+    return {"id": row.id, "filename": row.filename,
+            "created_at": row.created_at.isoformat() if row.created_at else None,
+            "analysis": json.loads(row.analysis_result)}

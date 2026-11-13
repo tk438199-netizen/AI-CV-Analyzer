@@ -1,518 +1,147 @@
-// Backend API URL
-
 const API_URL = "https://ai-cv-analyzer-1-4cp0.onrender.com";
-
-
-// Registration Form
-
-const registerForm = document.getElementById("registerForm");
-
-if (registerForm) {
-
-    registerForm.addEventListener("submit", async function (event) {
-
-        event.preventDefault();
-
-        const fullName = document.getElementById("full_name").value.trim();
-
-        const email = document.getElementById("email").value.trim();
-
-        const password = document.getElementById("password").value;
-
-        const confirmPassword = document.getElementById("confirm_password").value;
-
-        const messageBox = document.getElementById("registerMessage");
-
-        const submitButton = registerForm.querySelector("button[type='submit']");
-
-
-        // Check password confirmation
-
-        if (password !== confirmPassword) {
-
-            messageBox.textContent = "Passwords do not match.";
-
-            messageBox.className = "form-message error";
-
-            return;
-        }
-
-
-        // Show loading
-
-        submitButton.disabled = true;
-
-        submitButton.textContent = "Creating Account...";
-
-        messageBox.className = "form-message";
-
-        messageBox.textContent = "";
-
-
-        try {
-
-            // Send registration request
-
-            const response = await fetch(`${API_URL}/auth/register`, {
-
-                method: "POST",
-
-                headers: {
-                    "Content-Type": "application/json"
-                },
-
-                body: JSON.stringify({
-
-                    full_name: fullName,
-
-                    email: email,
-
-                    password: password
-
-                })
-
-            });
-
-
-            const data = await response.json();
-
-
-            // Handle API errors
-
-            if (!response.ok) {
-
-                throw new Error(
-                    data.detail || "Registration failed."
-                );
-
-            }
-
-
-            // Success message
-
-            messageBox.textContent = data.message;
-
-            messageBox.className = "form-message success";
-
-
-            // Reset form
-
-            registerForm.reset();
-
-
-            // Redirect to login page after 2 seconds
-
-            setTimeout(() => {
-
-                window.location.href = "login.html";
-
-            }, 2000);
-
-
-        }
-
-        catch (error) {
-
-            messageBox.textContent = error.message;
-
-            messageBox.className = "form-message error";
-
-        }
-
-        finally {
-
-            submitButton.disabled = false;
-
-            submitButton.textContent = "Create Account →";
-
-        }
-
-    });
-
+const $ = (id) => document.getElementById(id);
+const token = () => localStorage.getItem("cv_access_token");
+const userSaved = () => { try { return JSON.parse(localStorage.getItem("cv_user") || "null"); } catch { return null; } };
+const authHeaders = () => token() ? { Authorization: `Bearer ${token()}` } : {};
+
+async function api(path, options = {}) {
+  const headers = { ...(options.headers || {}), ...authHeaders() };
+  const response = await fetch(`${API_URL}${path}`, { ...options, headers });
+  let data = {}; try { data = await response.json(); } catch {}
+  if (response.status === 401) {
+    localStorage.removeItem("cv_access_token"); localStorage.removeItem("cv_user");
+    if (!location.pathname.endsWith("login.html") && !location.pathname.endsWith("register.html")) location.href = "login.html";
+  }
+  if (!response.ok) throw new Error(data.detail || "Something went wrong.");
+  return data;
 }
-
-// ===============================
-// LOGIN FORM
-// ===============================
-
-const loginForm = document.getElementById("loginForm");
-
-if (loginForm) {
-
-    loginForm.addEventListener("submit", async function (event) {
-
-        event.preventDefault();
-
-        const email = document.getElementById("email").value.trim();
-
-        const password = document.getElementById("password").value;
-
-        const messageBox = document.getElementById("loginMessage");
-
-        const submitButton = loginForm.querySelector(
-            "button[type='submit']"
-        );
-
-
-        // Loading message
-
-        submitButton.disabled = true;
-
-        submitButton.textContent = "Logging in...";
-
-        messageBox.className = "form-message";
-
-        messageBox.textContent = "";
-
-
-        try {
-
-            // Send Login Request
-
-            const response = await fetch(`${API_URL}/auth/login`, {
-
-                method: "POST",
-
-                headers: {
-                    "Content-Type": "application/json"
-                },
-
-                body: JSON.stringify({
-
-                    email: email,
-
-                    password: password
-
-                })
-
-            });
-
-
-            const data = await response.json();
-
-
-            // Check API Response
-
-            if (!response.ok) {
-
-                throw new Error(
-                    data.detail || "Login failed."
-                );
-
-            }
-
-
-            // Save basic user information temporarily
-
-            sessionStorage.setItem(
-                "currentUser",
-                JSON.stringify(data.user)
-            );
-
-
-            // Show success message
-
-            messageBox.textContent = data.message;
-
-            messageBox.className = "form-message success";
-
-
-            // Redirect to dashboard
-
-            setTimeout(() => {
-
-                window.location.href = "dashboard.html";
-
-            }, 1500);
-
-
-        }
-
-        catch (error) {
-
-            messageBox.textContent = error.message;
-
-            messageBox.className = "form-message error";
-
-        }
-
-        finally {
-
-            submitButton.disabled = false;
-
-            submitButton.textContent = "Login →";
-
-        }
-
-    });
-
+function showMessage(el, msg, type = "error") { if (!el) return; el.textContent = msg; el.className = `message ${type}`; }
+function setSession(data) {
+  localStorage.setItem("cv_access_token", data.access_token);
+  localStorage.setItem("cv_user", JSON.stringify(data.user));
 }
-
-// ===============================
-// DASHBOARD USER INFORMATION
-// ===============================
-
-const currentUser = sessionStorage.getItem("currentUser");
-
-const dashboardPage = document.querySelector(".dashboard-page");
-
-if (dashboardPage) {
-
-    // Check login information
-
-    if (!currentUser) {
-
-        window.location.href = "login.html";
-
-    } else {
-
-        const user = JSON.parse(currentUser);
-
-        // Display user name
-
-        document.getElementById("userName").textContent =
-            user.full_name;
-
-        document.getElementById("userEmail").textContent =
-            user.email;
-
-        document.getElementById("welcomeName").textContent =
-            user.full_name.split(" ")[0];
-
-        // Display avatar initial
-
-        document.getElementById("userAvatar").textContent =
-            user.full_name.charAt(0).toUpperCase();
-
-    }
-
+function protectPage() {
+  const protectedPage = document.body.classList.contains("app-page");
+  if (protectedPage && !token()) { location.replace("login.html"); return false; }
+  if ((location.pathname.endsWith("login.html") || location.pathname.endsWith("register.html")) && token()) {
+    location.replace("dashboard.html"); return false;
+  }
+  return true;
 }
+if (protectPage()) {
+  const registerForm = $("registerForm");
+  if (registerForm) registerForm.addEventListener("submit", async e => {
+    e.preventDefault();
+    const msg = $("registerMessage"), btn = registerForm.querySelector("button");
+    const password = $("password").value;
+    if (password !== $("confirm_password").value) return showMessage(msg, "Passwords do not match.");
+    btn.disabled = true; btn.textContent = "Creating account…";
+    try {
+      const data = await api("/auth/register", { method: "POST", headers: {"Content-Type":"application/json"}, body: JSON.stringify({full_name:$("full_name").value.trim(), email:$("email").value.trim(), password}) });
+      setSession(data); location.href = "dashboard.html";
+    } catch(err) { showMessage(msg, err.message); }
+    finally { btn.disabled = false; btn.textContent = "Create account →"; }
+  });
 
+  const loginForm = $("loginForm");
+  if (loginForm) loginForm.addEventListener("submit", async e => {
+    e.preventDefault(); const msg=$("loginMessage"), btn=loginForm.querySelector("button");
+    btn.disabled=true; btn.textContent="Signing in…";
+    try {
+      const data=await api("/auth/login",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({email:$("email").value.trim(),password:$("password").value})});
+      setSession(data); location.href="dashboard.html";
+    } catch(err) { showMessage(msg,err.message); }
+    finally { btn.disabled=false; btn.textContent="Sign in →"; }
+  });
 
-// ===============================
-// LOGOUT FUNCTION
-// ===============================
+  if ($("logoutBtn")) $("logoutBtn").addEventListener("click",()=>{localStorage.removeItem("cv_access_token");localStorage.removeItem("cv_user");location.href="login.html";});
 
-const logoutBtn = document.getElementById("logoutBtn");
+  async function loadProfile() {
+    if (!$("userName")) return;
+    try {
+      const data=await api("/auth/me"), u=data.user;
+      localStorage.setItem("cv_user",JSON.stringify(u));
+      $("userName").textContent=u.full_name; $("userEmail").textContent=u.email;
+      $("userAvatar").textContent=(u.full_name||"U").charAt(0).toUpperCase();
+    } catch { const u=userSaved(); if(u){$("userName").textContent=u.full_name;$("userEmail").textContent=u.email;} }
+  }
 
-if (logoutBtn) {
+  async function loadHistory() {
+    if (!$("historyList")) return;
+    const list=$("historyList");
+    try {
+      const data=await api("/cv/history"), rows=data.history||[];
+      $("totalAnalyses").textContent=data.total_records??rows.length;
+      $("savedReports").textContent=rows.length;
+      $("latestScore").textContent=rows.length && rows[0].predicted_score!=null ? `${Math.round(rows[0].predicted_score)}/100` : "—";
+      if(!rows.length){list.innerHTML='<div class="history-empty"><span>◷</span><b>No reports yet</b><p>Your completed CV analyses will appear here.</p></div>';return;}
+      list.innerHTML=rows.map(row=>`<button class="history-row" data-id="${row.id}"><span class="history-file">PDF</span><span class="history-meta"><b>${escapeHTML(row.filename)}</b><small>${formatDate(row.created_at)} · ${row.page_count??"—"} pages · ${row.word_count??"—"} words</small></span><strong>${row.predicted_score==null?"—":Math.round(row.predicted_score)+"/100"}</strong><span class="history-open">View report →</span></button>`).join("");
+      list.querySelectorAll("[data-id]").forEach(btn=>btn.addEventListener("click",()=>openHistory(btn.dataset.id)));
+    } catch(err) { list.innerHTML=`<div class="history-empty">${escapeHTML(err.message)}</div>`; }
+  }
+  async function openHistory(id) {
+    try { const data=await api(`/cv/history/${id}`); localStorage.setItem("cv_current_result",JSON.stringify(data.analysis)); location.href="result.html"; }
+    catch(err){alert(err.message);}
+  }
+  if($("refreshHistory")) $("refreshHistory").addEventListener("click",loadHistory);
+  if($("historyList")) { loadProfile(); loadHistory(); }
 
-    logoutBtn.addEventListener("click", function () {
-
-        sessionStorage.removeItem("currentUser");
-
-        window.location.href = "login.html";
-
+  const uploadBtn=$("uploadBtn"), input=$("cvFile");
+  if(uploadBtn && input) {
+    uploadBtn.addEventListener("click",()=>input.click());
+    const dz=$("dropzone");
+    ["dragenter","dragover"].forEach(ev=>dz.addEventListener(ev,e=>{e.preventDefault();dz.classList.add("dragging");}));
+    ["dragleave","drop"].forEach(ev=>dz.addEventListener(ev,e=>{e.preventDefault();dz.classList.remove("dragging");}));
+    dz.addEventListener("drop",e=>{if(e.dataTransfer.files.length){input.files=e.dataTransfer.files;input.dispatchEvent(new Event("change"));}});
+    input.addEventListener("change",async()=>{
+      const file=input.files[0];if(!file)return;
+      if(!file.name.toLowerCase().endsWith(".pdf"))return showMessage($("uploadMessage"),"Please choose a PDF file.");
+      if(file.size>5*1024*1024)return showMessage($("uploadMessage"),"The file must be smaller than 5 MB.");
+      $("selectedFile").textContent=file.name; uploadBtn.disabled=true;uploadBtn.textContent="Analyzing…";
+      showMessage($("uploadMessage"),"Uploading and analyzing your CV. Please wait…","info");
+      $("uploadProgress").classList.add("visible");$("progressBar").style.width="35%";
+      try{
+        const form=new FormData();form.append("file",file);
+        const data=await api("/cv/analyze-complete",{method:"POST",body:form});
+        $("progressBar").style.width="100%";localStorage.setItem("cv_current_result",JSON.stringify(data));
+        showMessage($("uploadMessage"),"Analysis complete. Opening your report…","success");
+        setTimeout(()=>location.href="result.html",450);
+      }catch(err){showMessage($("uploadMessage"),err.message);}
+      finally{uploadBtn.disabled=false;uploadBtn.textContent="Choose PDF file";}
     });
+  }
 
+  if($("cvScore")) {
+    let result=null;
+    try { result=JSON.parse(localStorage.getItem("cv_current_result")||"null"); } catch {}
+    if(!result){location.replace("dashboard.html");}
+    else renderResult(result);
+  }
 }
-
-// =====================================
-// CV PDF UPLOAD AND ANALYSIS
-// =====================================
-
-const uploadBtn = document.getElementById("uploadBtn");
-const cvFile = document.getElementById("cvFile");
-
-const selectedFile = document.getElementById("selectedFile");
-const uploadMessage = document.getElementById("uploadMessage");
-
-const uploadProgress = document.getElementById("uploadProgress");
-const progressBar = document.getElementById("progressBar");
-
-if (uploadBtn && cvFile) {
-
-    uploadBtn.addEventListener("click", function () {
-        cvFile.click();
-    });
-
-    cvFile.addEventListener("change", async function () {
-
-        const file = cvFile.files[0];
-
-        if (!file) return;
-
-        console.log("Selected file:", file.name);
-
-        selectedFile.textContent = "Selected: " + file.name;
-
-        // Validate PDF
-        if (!file.name.toLowerCase().endsWith(".pdf")) {
-            uploadMessage.textContent = "Please select a PDF file.";
-            uploadMessage.className = "form-message error";
-            return;
-        }
-
-        // Validate size
-        if (file.size > 5 * 1024 * 1024) {
-            uploadMessage.textContent = "File must be less than 5MB.";
-            uploadMessage.className = "form-message error";
-            return;
-        }
-
-        const formData = new FormData();
-        formData.append("file", file);
-
-        uploadBtn.disabled = true;
-        uploadBtn.textContent = "Analyzing...";
-
-        uploadMessage.textContent = "Analyzing your CV. Please wait...";
-        uploadMessage.className = "form-message";
-
-        uploadProgress.classList.add("active");
-        progressBar.style.width = "30%";
-
-        try {
-
-            console.log("Sending request to backend...");
-
-            const response = await fetch(
-                `${API_URL}/cv/analyze-complete`,
-                {
-                    method: "POST",
-                    body: formData
-                }
-            );
-
-            const data = await response.json();
-
-            console.log("Backend response:", data);
-
-            if (!response.ok) {
-                throw new Error(data.detail || "Analysis failed.");
-            }
-
-            sessionStorage.setItem(
-                "cvAnalysisResult",
-                JSON.stringify(data)
-            );
-
-            progressBar.style.width = "100%";
-
-            uploadMessage.textContent =
-                "Analysis completed! Redirecting...";
-
-            uploadMessage.className = "form-message success";
-
-            window.location.href = "result.html";
-
-        }
-
-        catch (error) {
-
-            console.error("CV Analysis Error:", error);
-
-            uploadMessage.textContent = error.message;
-
-            uploadMessage.className = "form-message error";
-
-        }
-
-        finally {
-
-            uploadBtn.disabled = false;
-            uploadBtn.textContent = "Choose PDF File";
-
-        }
-
-    });
-
+function escapeHTML(v){return String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));}
+function formatDate(v){if(!v)return "Date unavailable";const d=new Date(v);return isNaN(d)?"Date unavailable":d.toLocaleString(undefined,{dateStyle:"medium",timeStyle:"short"});}
+function flatten(value){
+  if(value==null)return [];
+  if(Array.isArray(value))return value.flatMap(flatten);
+  if(typeof value==="object")return Object.entries(value).flatMap(([k,v])=>[`${k.replaceAll("_"," ")}: ${Array.isArray(v)?v.join(", "):typeof v==="object"?JSON.stringify(v):v}`]);
+  return [String(value)];
 }
-
-// =====================================
-// DISPLAY CV ANALYSIS RESULT
-// =====================================
-
-const resultPage = document.querySelector(".result-container");
-
-if (resultPage) {
-
-    const savedResult = sessionStorage.getItem("cvAnalysisResult");
-
-    if (!savedResult) {
-
-        window.location.href = "dashboard.html";
-
-    } else {
-
-        try {
-
-            const result = JSON.parse(savedResult);
-
-            console.log("Complete CV Result:", result);
-
-            // Score
-            document.getElementById("cvScore").textContent =
-                result.score_analysis?.predicted_score ?? "N/A";
-
-
-            // File Information
-            document.getElementById("fileName").textContent =
-                result.filename ?? "N/A";
-
-            document.getElementById("pageCount").textContent =
-                result.file_information?.page_count ?? "N/A";
-
-            document.getElementById("wordCount").textContent =
-                result.file_information?.word_count ?? "N/A";
-
-
-            // Skills
-            document.getElementById("skillsCount").textContent =
-                result.skills_analysis?.total_skills ?? 0;
-
-
-            // Education
-            document.getElementById("educationCount").textContent =
-                result.education_analysis?.degrees?.length ?? 0;
-
-
-            // Projects
-            document.getElementById("projectsCount").textContent =
-                result.projects_analysis?.total_projects ?? 0;
-
-
-            // Suggestions
-            const suggestionList =
-                document.getElementById("suggestionList");
-
-            suggestionList.innerHTML = "";
-
-            const suggestions =
-                result.improvement_analysis?.suggestions ?? [];
-
-            if (suggestions.length === 0) {
-
-                suggestionList.textContent =
-                    "No suggestions available.";
-
-            } else {
-
-                suggestions.forEach(function (suggestion) {
-
-                    const item = document.createElement("div");
-
-                    item.className = "suggestion-item";
-
-                    item.textContent =
-                        typeof suggestion === "string"
-                            ? suggestion
-                            : JSON.stringify(suggestion);
-
-                    suggestionList.appendChild(item);
-
-                });
-
-            }
-
-        } catch (error) {
-
-            console.error("Result Display Error:", error);
-
-            alert("Unable to display CV analysis results.");
-
-        }
-
-    }
-
+function renderResult(r){
+  const score=r.score_analysis?.predicted_score;
+  $("cvScore").innerHTML=`${score==null?"—":Math.round(score)}<small>/100</small>`;
+  $("reportFile").textContent=`${r.filename||"CV report"} · Analysis #${r.analysis_id??"saved"}`;
+  $("pageCount").textContent=r.file_information?.page_count??"—";
+  $("wordCount").textContent=r.file_information?.word_count??"—";
+  $("skillsCount").textContent=r.skills_analysis?.total_skills??"—";
+  $("projectsCount").textContent=r.projects_analysis?.total_projects??"—";
+  const p=r.personal_information||{};
+  $("personalInfo").innerHTML=Object.entries(p).filter(([,v])=>v).map(([k,v])=>`<p><small>${escapeHTML(k.replaceAll("_"," "))}</small><b>${escapeHTML(v)}</b></p>`).join("")||"<p>No personal information detected.</p>";
+  $("educationInfo").innerHTML=flatten(r.education_analysis).map(v=>`<p>${escapeHTML(v)}</p>`).join("")||"<p>No education details detected.</p>";
+  const skills=r.skills_analysis?.skills||{};
+  $("skillsInfo").innerHTML=Object.values(skills).flat().map(v=>`<span>${escapeHTML(v)}</span>`).join("")||"<p>No skills detected.</p>";
+  const projects=flatten(r.projects_analysis), exp=flatten(r.experience_analysis);
+  $("projectsInfo").innerHTML=[...projects,...exp].map(v=>`<p>${escapeHTML(v)}</p>`).join("")||"<p>No project or experience details detected.</p>";
+  let suggestions=r.improvement_analysis?.suggestions??r.improvement_analysis??[];
+  if(!Array.isArray(suggestions))suggestions=flatten(suggestions);
+  $("suggestionList").innerHTML=suggestions.length?suggestions.map((v,i)=>`<div class="suggestion"><b>${String(i+1).padStart(2,"0")}</b><span>${escapeHTML(typeof v==="string"?v:JSON.stringify(v))}</span></div>`).join(""):"<p>No suggestions available.</p>";
 }
