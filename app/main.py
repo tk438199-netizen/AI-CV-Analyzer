@@ -6,14 +6,19 @@ from app.models import user, analysis
 from app.routes import auth, cv
 
 app = FastAPI(title="AI Powered CV Analyzer", description="An AI-based CV Analysis System", version="2.0.0")
+from fastapi.middleware.cors import CORSMiddleware
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
-        "http://127.0.0.1:5500",
+        "https://ai-cv-analyzer-frontend-eight.vercel.app",
         "http://localhost:5500",
-        "https://ai-cv-analyzer-frontend-eight.vercel.app"
+        "http://127.0.0.1:5500",
     ],
-    allow_credentials=True, allow_methods=["*"], allow_headers=["*"]
+    allow_origin_regex=r"https://.*\.vercel\.app",
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 Base.metadata.create_all(bind=engine)
 
