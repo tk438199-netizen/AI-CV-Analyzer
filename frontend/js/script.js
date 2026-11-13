@@ -1,4 +1,4 @@
-const API_URL = "https://ai-cv-analyzer-1-4cp0.onrender.com";
+const API_URL = "https://ai-cv-analyzer-6o0.onrender.com";
 const $ = (id) => document.getElementById(id);
 const token = () => localStorage.getItem("cv_access_token");
 const userSaved = () => { try { return JSON.parse(localStorage.getItem("cv_user") || "null"); } catch { return null; } };
