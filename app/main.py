@@ -6,7 +6,7 @@ from app.models import user, analysis
 from app.routes import auth, cv
 
 app = FastAPI(title="AI Powered CV Analyzer", description="An AI-based CV Analysis System", version="2.0.0")
-from fastapi.middleware.cors import CORSMiddleware
+
 
 app.add_middleware(
     CORSMiddleware,
